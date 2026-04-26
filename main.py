@@ -12,13 +12,26 @@ tracer_provider = register(
     endpoint=os.getenv("PHOENIX_COLLECTOR_ENDPOINT"),
 )
 
-app = get_fast_api_app(
-    agents_dir=AGENT_DIR,
-    web=True,
-)
+
+def build_database_uri():
+    "Build the database URI"
+    user = os.getenv('POSTGRES_USER')
+    password = os.getenv('POSTGRES_PASSWORD')
+    host = os.getenv('POSTGRES_HOST')
+    port = os.getenv('POSTGRES_PORT')
+    db = os.getenv('POSTGRES_DB')
+
+    if not all([user, password, host, port, db]):
+        raise ValueError("Missing environment variables")
+
+    return f"postgresql+asyncpg://{user}:{password}@{host}:{port}/{db}"
+
+
+app = get_fast_api_app(agents_dir=AGENT_DIR, web=True, session_service_uri=build_database_uri())
 
 if __name__ == "__main__":
     import uvicorn
+
     PORT = os.getenv("PORT", "8080")
 
     uvicorn.run(app, host="0.0.0.0", port=int(PORT))
