@@ -3,15 +3,16 @@ services:
     agent-database:
       image: postgres:16-alpine
       environment:
-        - POSTGRES_USER=${POSTGRES_USER}
-        - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-        - POSTGRES_DB=${POSTGRES_DB}
-        - POSTGRES_PORT=${POSTGRES_PORT}
-        - POSTGRES_HOST=${POSTGRES_HOST}
+        - POSTGRES_USER=${POSTGRES_USER:-postgres}
+        - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres}
+        - POSTGRES_DB=${POSTGRES_DB:-postgres}
       ports:
         - 5432:5432
       healthcheck:
-        test: ["CMD-SHELL", "pg_isready -U postgres"]
+        test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+        interval: 5s
+        timeout: 3s
+        retries: 20
       restart: unless-stopped
       volumes:
         - agent-database-data:/var/lib/postgresql/data
@@ -25,6 +26,10 @@ services:
         - GOOGLE_API_KEY=${GOOGLE_API_KEY}
         - GOOGLE_GENAI_USE_VERTEXAI=${GOOGLE_GENAI_USE_VERTEXAI}
         - PHOENIX_COLLECTOR_ENDPOINT=${PHOENIX_COLLECTOR_ENDPOINT}
+        # Primary DB (agent-database)
+        - POSTGRES_HOST=agent-database
+        - POSTGRES_PORT=5432
+        - PORT=${PORT:-8080}
       ports:
         - 8080:8080
       depends_on:
@@ -39,8 +44,28 @@ services:
         - 4317:4317
       depends_on:
         - agent-server
-        
+
+    # Development Database
+    development-database:
+      image: postgres:16-alpine
+      environment:
+        - POSTGRES_USER=${DEVELOPMENT_POSTGRES_USER:-postgres}
+        - POSTGRES_PASSWORD=${DEVELOPMENT_POSTGRES_PASSWORD:-postgres}
+        - POSTGRES_DB=${DEVELOPMENT_POSTGRES_DB:-postgres}
+      ports:
+        - ${DEVELOPMENT_POSTGRES_PORT:-5433}:5432
+      healthcheck:
+        test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+        interval: 5s
+        timeout: 3s
+        retries: 20
+      restart: unless-stopped
+      volumes:
+        - development-database-data:/var/lib/postgresql/data
+        - ./SQL/01_seed.sql:/docker-entrypoint-initdb.d/01_seed.sql:ro
 
 volumes:
   agent-database-data:
+    driver: local
+  development-database-data:
     driver: local
