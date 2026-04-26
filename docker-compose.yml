@@ -1,0 +1,46 @@
+services:
+    # Agent Database
+    agent-database:
+      image: postgres:16-alpine
+      environment:
+        - POSTGRES_USER=${POSTGRES_USER}
+        - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+        - POSTGRES_DB=${POSTGRES_DB}
+        - POSTGRES_PORT=${POSTGRES_PORT}
+        - POSTGRES_HOST=${POSTGRES_HOST}
+      ports:
+        - 5432:5432
+      healthcheck:
+        test: ["CMD-SHELL", "pg_isready -U postgres"]
+      restart: unless-stopped
+      volumes:
+        - agent-database-data:/var/lib/postgresql/data
+  
+    # Agent Server
+    agent-server:
+      build:
+        context: .
+        dockerfile: Dockerfile
+      environment:
+        - GOOGLE_API_KEY=${GOOGLE_API_KEY}
+        - GOOGLE_GENAI_USE_VERTEXAI=${GOOGLE_GENAI_USE_VERTEXAI}
+        - PHOENIX_COLLECTOR_ENDPOINT=${PHOENIX_COLLECTOR_ENDPOINT}
+      ports:
+        - 8080:8080
+      depends_on:
+        - agent-database
+      restart: unless-stopped
+      
+    # Tracing
+    phoenix:
+      image: arizephoenix/phoenix
+      ports:
+        - 6006:6006
+        - 4317:4317
+      depends_on:
+        - agent-server
+        
+
+volumes:
+  agent-database-data:
+    driver: local
