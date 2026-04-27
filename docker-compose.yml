@@ -35,6 +35,8 @@ services:
         - POSTGRES_USER=${POSTGRES_USER}
         - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
         - POSTGRES_DB=${POSTGRES_DB}
+        # Development DB (development-database)
+        - DEVELOPMENT_URI=${DEVELOPMENT_URI}
       ports:
         - 8080:8080
       depends_on:
@@ -54,11 +56,11 @@ services:
     development-database:
       image: postgres:16-alpine
       environment:
-        - POSTGRES_USER=${DEVELOPMENT_POSTGRES_USER:-postgres}
-        - POSTGRES_PASSWORD=${DEVELOPMENT_POSTGRES_PASSWORD:-postgres}
-        - POSTGRES_DB=${DEVELOPMENT_POSTGRES_DB:-postgres}
+        - POSTGRES_USER=${DEVELOPMENT_POSTGRES_USER}
+        - POSTGRES_PASSWORD=${DEVELOPMENT_POSTGRES_PASSWORD}
+        - POSTGRES_DB=${DEVELOPMENT_POSTGRES_DB}
       ports:
-        - ${DEVELOPMENT_POSTGRES_PORT:-5433}:5432
+        - ${DEVELOPMENT_POSTGRES_PORT}:5432
       healthcheck:
         test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
         interval: 5s
