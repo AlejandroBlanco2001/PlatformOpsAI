@@ -1,0 +1,51 @@
+Table customers {
+  id int [pk, increment]
+  name varchar(100) [not null]
+  tier varchar(20)
+  monthly_budget decimal(10,2)
+  alert_threshold_pct int [default: 80]
+  created_at timestamp
+}
+
+Table models {
+  id int [pk, increment]
+  name varchar(50) [not null]
+  provider varchar(50)
+  region varchar(20)
+  cost_per_1k_input decimal(8,6)
+  cost_per_1k_output decimal(8,6)
+}
+
+Table api_keys {
+  id int [pk, increment]
+  customer_id int
+  key_name varchar(100)
+  is_active boolean [default: true]
+  rate_limit_rpm int [default: 60]
+  created_at timestamp
+}
+
+Table requests {
+  id int [pk, increment]
+  api_key_id int
+  model_id int
+  tokens_input int
+  tokens_output int
+  latency_ms int
+  status varchar(20)
+  created_at timestamp
+}
+
+Table alerts {
+  id int [pk, increment]
+  customer_id int
+  severity varchar(20)
+  message text
+  created_at timestamp
+  resolved_at timestamp
+}
+
+Ref: api_keys.customer_id > customers.id
+Ref: requests.api_key_id > api_keys.id
+Ref: requests.model_id > models.id
+Ref: alerts.customer_id > customers.id
