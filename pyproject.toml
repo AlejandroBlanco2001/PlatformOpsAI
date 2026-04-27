@@ -7,7 +7,7 @@ requires-python = ">=3.12"
 dependencies = [
     "arize-phoenix-otel>=0.16.0",
     "asyncpg>=0.31.0",
-    "google-adk>=1.31.1",
+    "google-adk[toolbox]>=1.31.1",
     "openinference-instrumentation-google-adk>=0.1.10",
     "uvicorn>=0.45.0",
 ]
